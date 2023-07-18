@@ -44,17 +44,20 @@ const validateEmailByRowIndex = (rowIndex, value) => {
 }
 
 const createValidEntry = () => {
-  createValidEntryWithFields(VALID_NAME, VALID_PHONE, VALID_EMAIL)
+  createEntryWithFields(VALID_NAME, VALID_PHONE, VALID_EMAIL)
 }
 
-const createValidEntryWithFields = (name, phone, email) => {
+const createEntryWithFields = (name, phone, email) => {
   enterName(name)
   enterPhoneNumber(phone)
   enterEmail(email)
   clickAdd()
 }
 
-
+/**
+ * Author: Guilherme Jardim
+ * July 2023
+ */
 describe('Test Contact App', () => {
 
   beforeEach(() => {
@@ -63,20 +66,23 @@ describe('Test Contact App', () => {
 
   it('Test if the application loads correctly', () => {
     cy.get('h1.text-center').should('have.text', 'Contact List App');
-    cy.get(TABLE_ROW).should('have.length', 1)
+    cy.validateNumberOfRows(1)
   })
 
   // Add tests here
 
   //Create entry
+  //Although the table is always empty when the page loads, a few tests below
+  //are designed as if there could be pre-existing data in the table
   context('Test create a new entry', () => {
+
 
     it('Test adding entry with valid name, phone and email', () => {
       cy.get(TABLE_ROW).should($tr => {
         return $tr.length
       }).then((rows) => {
         createValidEntry()
-        cy.get(TABLE_ROW).should('have.length', rows.length + 1)
+        cy.validateNumberOfRows(rows.length + 1)
         validateNameByRowIndex(1, VALID_NAME)
         validatePhoneByRowIndex(1, VALID_PHONE)
         validateEmailByRowIndex(1, VALID_EMAIL)
@@ -99,12 +105,31 @@ describe('Test Contact App', () => {
     })
 
     it('Should not accept empty entries', () => {
-      cy.get(TABLE_ROW).should($tr => {
-        return $tr
-      }).then((rows) => {
-        clickAdd()
-        cy.get(TABLE_ROW).should('have.length', rows.length)
-      })
+      cy.get(TABLE_ROW).should($tr => { return $tr })
+        .then((rows) => {
+          clickAdd()
+          cy.get(TABLE_ROW).should('have.length', rows.length)
+        })
+
+    })
+
+    it('Should not accept invalid email addresses', () => {
+      let invalidEmail = 'invalid.email'
+
+      cy.get(TABLE_ROW).should($tr => { return $tr })
+        .then((rows) => {
+          createEntryWithFields(VALID_NAME, VALID_PHONE, invalidEmail)
+          //Length should remain unchanged
+          cy.get(TABLE_ROW).should('have.length', rows.length)
+          cy.get(`td:contains(${invalidEmail})`).should('not.exist')
+        })
+    })
+
+    it('Should not accept letters in the phone field', () => {
+      let invalidPhone = '444-AAA-8989'
+
+      createEntryWithFields(VALID_NAME, invalidPhone, VALID_EMAIL)
+      cy.get(`td:contains(${invalidPhone})`).should('not.exist')
 
     })
 
@@ -197,22 +222,51 @@ describe('Test Contact App', () => {
         phone: '613-342-3344',
         email: 'b.garcia@gmail.com'
       }
-      createValidEntryWithFields(newUser.name, newUser.phone, newUser.email)
-      cy.get(TABLE_ROW).should($tr => {
-        return $tr
-      }).then((rows) => {
-        cy.get(TABLE_ROW).eq(1).find(DELETE_BUTTON).click()
-        cy.get(TABLE_ROW).should('have.length', rows.length - 1)
-        cy.get('td').contains(VALID_NAME).should('not.exist')
-        cy.get('td').contains(VALID_PHONE).should('not.exist')
-        cy.get('td').contains(VALID_EMAIL).should('not.exist')
-        cy.get('td').contains(newUser.name).should('exist')
-        cy.get('td').contains(newUser.phone).should('exist')
-        cy.get('td').contains(newUser.email).should('exist')
-      })
-     
+      createEntryWithFields(newUser.name, newUser.phone, newUser.email)
+      cy.get(TABLE_ROW).should($tr => { return $tr })
+        .then((rows) => {
+          cy.get(TABLE_ROW).eq(1).find(DELETE_BUTTON).click()
+          cy.get(TABLE_ROW).should('have.length', rows.length - 1)
+          cy.get('td').contains(VALID_NAME).should('not.exist')
+          cy.get('td').contains(VALID_PHONE).should('not.exist')
+          cy.get('td').contains(VALID_EMAIL).should('not.exist')
+          cy.get('td').contains(newUser.name).should('exist')
+          cy.get('td').contains(newUser.phone).should('exist')
+          cy.get('td').contains(newUser.email).should('exist')
+        })
 
+    })
 
+    it('Test delete all entries one by one', () => {
+      cy.get(TABLE_ROW).should($tr => { return $tr })
+        .then((rows) => {
+          let newUser1 = {
+            name: 'Barbara Garcia',
+            phone: '613-342-3344',
+            email: 'b.garcia@gmail.com'
+          }
+          let newUser2 = {
+            name: 'Bob King',
+            phone: '613-987-3344',
+            email: 'bking@gmail.com'
+          }
+          let newUser3 = {
+            name: 'Ava Max',
+            phone: '343-565-7878',
+            email: 'max.ava@yahoo.com'
+          }
+
+          let users = [newUser1, newUser2, newUser3]
+          for (let newUser of users) createEntryWithFields(newUser.name, newUser.phone, newUser.email)
+          cy.get(TABLE_ROW).should('have.length', rows.length + users.length)
+
+          for (let newUser of users) {
+            cy.get(`td:contains(${newUser.name})`).parent().find(DELETE_BUTTON).click()
+          }
+
+          cy.get(TABLE_ROW).should('have.length', rows.length)
+
+        })
     })
   })
 
