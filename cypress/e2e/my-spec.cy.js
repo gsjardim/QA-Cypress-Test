@@ -7,6 +7,7 @@ const EMAIL_INPUT = 'input[placeholder=Email]'
 const ADD_BUTTON = 'button[name=add]'
 const EDIT_BUTTON = 'button[name=edit]'
 const DELETE_BUTTON = 'button[name=delete]'
+const UPDATE_BUTTON = 'button[name=update]'
 const TABLE_ROW = 'table tbody tr'
 
 //Test data
@@ -21,6 +22,7 @@ const enterEmail = text => cy.get(EMAIL_INPUT).type(text)
 const clickAdd = () => cy.get(ADD_BUTTON).click()
 const clickEdit = () => cy.get(EDIT_BUTTON).click()
 const clickDelete = () => cy.get(DELETE_BUTTON).click()
+const clickUpdate = () => cy.get(UPDATE_BUTTON).click()
 
 const validateNameByRowIndex = (rowIndex, value) => {
   cy.get(TABLE_ROW).eq(rowIndex)
@@ -86,6 +88,8 @@ describe('Test Contact App', () => {
         validateNameByRowIndex(1, VALID_NAME)
         validatePhoneByRowIndex(1, VALID_PHONE)
         validateEmailByRowIndex(1, VALID_EMAIL)
+        cy.verifyThatExists(EDIT_BUTTON)
+        cy.verifyThatExists(DELETE_BUTTON)
       })
 
     })
@@ -137,12 +141,28 @@ describe('Test Contact App', () => {
 
   //Edit entry
   context('Test edit an existing entry', () => {
+
+    it('Test buttons are displayed and hidden correclty on the screen', () => {
+      createValidEntry()
+      cy.verifyThatExists(EDIT_BUTTON)
+      cy.verifyThatExists(DELETE_BUTTON)
+      cy.verifyThatNotExists(UPDATE_BUTTON)
+      clickEdit()
+      cy.verifyThatExists(UPDATE_BUTTON)
+      cy.verifyThatNotExists(EDIT_BUTTON)
+      cy.verifyThatNotExists(DELETE_BUTTON)
+      clickUpdate()
+      cy.verifyThatExists(EDIT_BUTTON)
+      cy.verifyThatExists(DELETE_BUTTON)
+      cy.verifyThatNotExists(UPDATE_BUTTON)
+    })
+
     it('Test edit entry NAME only and keep the other fields', () => {
       createValidEntry()
       clickEdit()
       let newName = 'Raphael'
       cy.get(TABLE_ROW).find('input').eq(0).clear().type(newName)
-      cy.get(TABLE_ROW).find('button').click()
+      clickUpdate()
       validateNameByRowIndex(1, newName)
       validatePhoneByRowIndex(1, VALID_PHONE)
       validateEmailByRowIndex(1, VALID_EMAIL)
@@ -153,7 +173,7 @@ describe('Test Contact App', () => {
       clickEdit()
       let newPhone = '123-456-7899'
       cy.get(TABLE_ROW).find('input').eq(1).clear().type(newPhone)
-      cy.get(TABLE_ROW).find('button').click()
+      clickUpdate()
       validateNameByRowIndex(1, VALID_NAME)
       validatePhoneByRowIndex(1, newPhone)
       validateEmailByRowIndex(1, VALID_EMAIL)
@@ -164,7 +184,7 @@ describe('Test Contact App', () => {
       clickEdit()
       let newEmail = 'angelo@gmail.com'
       cy.get(TABLE_ROW).find('input').eq(2).clear().type(newEmail)
-      cy.get(TABLE_ROW).find('button').click()
+      clickUpdate()
       validateNameByRowIndex(1, VALID_NAME)
       validatePhoneByRowIndex(1, VALID_PHONE)
       validateEmailByRowIndex(1, newEmail)
@@ -179,7 +199,7 @@ describe('Test Contact App', () => {
       cy.get(TABLE_ROW).find('input').eq(0).clear().type(newName)
       cy.get(TABLE_ROW).find('input').eq(1).clear().type(newPhone)
       cy.get(TABLE_ROW).find('input').eq(2).clear().type(newEmail)
-      cy.get(TABLE_ROW).find('button').click()
+      clickUpdate()
       validateNameByRowIndex(1, newName)
       validatePhoneByRowIndex(1, newPhone)
       validateEmailByRowIndex(1, newEmail)
@@ -188,7 +208,7 @@ describe('Test Contact App', () => {
     it('Test press edit button and save without making any changes', () => {
       createValidEntry()
       clickEdit()
-      cy.get(TABLE_ROW).find('button').click()
+      clickUpdate()
       validateNameByRowIndex(1, VALID_NAME)
       validatePhoneByRowIndex(1, VALID_PHONE)
       validateEmailByRowIndex(1, VALID_EMAIL)

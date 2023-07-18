@@ -1,8 +1,17 @@
-//This is only to exemplify how to add custom commands, although this is not the best
-//candidate, since it will most likely not be used in other spec files.
+
 Cypress.Commands.add('validateNumberOfRows', (num) => {
     cy.get('table tbody tr').should('have.length', num)
 })
+
+Cypress.Commands.add('verifyThatExists', (locator) => {
+    cy.get(locator).should('exist')
+})
+
+Cypress.Commands.add('verifyThatNotExists', (locator) => {
+    cy.get(locator).should('not.exist')
+})
+
+
 
 
 // ***********************************************
